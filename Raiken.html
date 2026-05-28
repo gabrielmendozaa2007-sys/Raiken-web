@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAIKEN — Automatización inteligente con IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#04060d;
+    --ink:#f3f5fb;
+    --muted:#9aa4bd;
+    --muted-dim:#6b7494;
+    --line:rgba(255,255,255,.10);
+    --gold-1:#f7e1a0;
+    --gold-2:#e9c46a;
+    --gold-3:#cd9a35;
+    --blue:#5b7cfa;
+    --glass:rgba(10,14,28,.62);
+    --radius:18px;
+    --maxw:1240px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;background:var(--bg)}
+  body{
+    font-family:'Manrope',system-ui,sans-serif;
+    background:transparent;
+    color:var(--ink);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.font-display{font-family:'Sora',sans-serif;letter-spacing:-.02em}
+
+  /* ---------- Background scene ---------- */
+  .scene{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .scene img{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;object-position:center 70%;
+    transform:scale(1.04);filter:brightness(1.18) contrast(1.04) saturate(1.06);
+  }
+  .scene::after{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(120% 90% at 50% -10%, rgba(91,124,250,.14), transparent 55%),
+      linear-gradient(90deg, rgba(4,6,13,.62) 0%, rgba(4,6,13,.30) 46%, rgba(4,6,13,.12) 100%),
+      linear-gradient(180deg, rgba(4,6,13,.22) 0%, rgba(4,6,13,.05) 45%, rgba(4,6,13,.62) 100%);
+  }
+  .vignette{position:fixed;inset:0;z-index:0;pointer-events:none;
+    box-shadow:inset 0 0 200px 30px rgba(0,0,0,.6);}
+  .flash{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;
+    background:radial-gradient(80% 60% at 30% 10%, rgba(173,196,255,.55), transparent 60%);
+    animation:flash 14s ease-in-out infinite;}
+  .flash.b{background:radial-gradient(70% 55% at 78% 14%, rgba(247,225,160,.40), transparent 60%);
+    animation-delay:7s;animation-duration:16s;}
+  @keyframes flash{
+    0%,100%{opacity:0}
+    49.4%{opacity:0}
+    50%{opacity:.9}
+    50.6%{opacity:.15}
+    51.2%{opacity:.8}
+    52%{opacity:0}
+  }
+  @media (prefers-reduced-motion:reduce){.flash{animation:none}}
+
+  /* ---------- Shell ---------- */
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 32px}
+  header,main,footer{position:relative;z-index:2}
+
+  /* ---------- Navbar ---------- */
+  header{position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(6px);
+    transition:background .3s,border-color .3s;
+    border-bottom:1px solid transparent;}
+  header.scrolled{background:rgba(4,6,13,.72);border-bottom-color:var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:78px}
+  .brand{display:flex;align-items:center;gap:13px;text-decoration:none}
+  header .brand img{width:60px;height:60px;object-fit:contain;
+    filter:drop-shadow(0 0 14px rgba(233,196,106,.45));}
+  footer .brand img{width:auto;height:26px;
+    filter:drop-shadow(0 0 14px rgba(233,196,106,.45));}
+  .brand .word{font-family:'Sora';font-weight:800;font-size:25px;letter-spacing:.14em;color:#fff}
+  .nav-cta{display:inline-flex;align-items:center;gap:9px;
+    padding:11px 22px;border-radius:11px;font-size:14px;font-weight:600;
+    color:#1a1405;text-decoration:none;
+    background:linear-gradient(135deg,var(--gold-1),var(--gold-2) 55%,var(--gold-3));
+    box-shadow:0 6px 22px rgba(205,154,53,.32);
+    transition:transform .2s,box-shadow .2s;}
+  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(205,154,53,.45)}
+
+  /* ---------- Hero ---------- */
+  .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;
+    align-items:center;padding:64px 0 90px;min-height:calc(100vh - 78px)}
+  @media(max-width:1040px){.hero{grid-template-columns:1fr;gap:44px;padding:48px 0 70px}}
+
+  h1{font-size:clamp(2.5rem,4.6vw,4.05rem);font-weight:800;line-height:1.04;
+    margin:24px 0 0;letter-spacing:-.03em;text-wrap:balance}
+  .grad{background:linear-gradient(105deg,var(--gold-1) 8%,var(--gold-2) 50%,var(--gold-3) 95%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .lead{color:var(--muted);font-size:17px;max-width:540px;margin:26px 0 0;text-wrap:pretty}
+  .lead strong{color:var(--ink);font-weight:600}
+  .rule{height:1px;width:120px;margin:30px 0 26px;
+    background:linear-gradient(90deg,var(--gold-2),transparent)}
+
+  .feat{list-style:none;display:grid;gap:14px;margin:6px 0 34px}
+  .feat li{display:flex;align-items:flex-start;gap:13px;font-size:15.5px;color:#d7dcec}
+  .feat .ic{flex:none;width:24px;height:24px;border-radius:7px;margin-top:1px;
+    display:grid;place-items:center;
+    background:linear-gradient(135deg,rgba(247,225,160,.18),rgba(205,154,53,.14));
+    border:1px solid rgba(233,196,106,.30);}
+  .feat .ic svg{width:13px;height:13px;stroke:var(--gold-1)}
+
+  /* ---------- Form card ---------- */
+  .card{position:relative;border-radius:22px;padding:38px 36px 34px;
+    background:var(--glass);backdrop-filter:blur(22px) saturate(120%);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.06);}
+  .card::before{content:"";position:absolute;inset:-1px;border-radius:23px;padding:1px;
+    background:linear-gradient(160deg,rgba(247,225,160,.55),transparent 35%,transparent 70%,rgba(91,124,250,.35));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+  .card h2{font-size:24px;font-weight:700}
+  .card .sub{color:var(--muted);font-size:14px;margin:6px 0 26px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field{margin-bottom:16px}
+  .field.full{grid-column:1/-1}
+  label{display:block;font-size:13px;font-weight:500;color:#c2c9dc;margin-bottom:7px}
+  label .req{color:var(--gold-2)}
+  .inp{width:100%;height:48px;padding:0 15px;border-radius:11px;
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(255,255,255,.12);
+    color:var(--ink);font-family:inherit;font-size:14.5px;
+    transition:border-color .2s,box-shadow .2s,background .2s;}
+  textarea.inp{height:auto;padding:13px 15px;resize:vertical;min-height:80px}
+  select.inp{appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa4bd' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 15px center;padding-right:40px}
+  .inp::placeholder{color:var(--muted-dim)}
+  .inp:hover{border-color:rgba(255,255,255,.22)}
+  .inp:focus{outline:none;border-color:var(--gold-2);background:rgba(255,255,255,.06);
+    box-shadow:0 0 0 3px rgba(233,196,106,.16)}
+  .inp.bad{border-color:#e06a6a;box-shadow:0 0 0 3px rgba(224,106,106,.14)}
+  .err{color:#f0908f;font-size:12px;margin-top:5px;display:none}
+  .err.show{display:block}
+  .phone-wrap{display:flex;gap:10px}
+  .phone-wrap .cc{flex:none;width:78px;display:grid;place-items:center;
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.12);
+    border-radius:11px;font-size:14.5px;color:#c2c9dc;user-select:none}
+
+  .submit{width:100%;height:52px;margin-top:8px;border:none;cursor:pointer;border-radius:12px;
+    font-family:'Sora';font-weight:700;font-size:15.5px;color:#1a1405;letter-spacing:.01em;
+    background:linear-gradient(135deg,var(--gold-1),var(--gold-2) 52%,var(--gold-3));
+    box-shadow:0 12px 30px -6px rgba(205,154,53,.45);
+    transition:transform .18s,box-shadow .18s,filter .18s;display:flex;align-items:center;justify-content:center;gap:10px}
+  .submit:hover{transform:translateY(-2px);box-shadow:0 18px 40px -6px rgba(205,154,53,.6);filter:brightness(1.05)}
+  .submit:active{transform:translateY(0)}
+
+  /* success */
+  .success{text-align:center;padding:30px 6px 14px;animation:rise .5s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .success .check{width:74px;height:74px;border-radius:50%;margin:0 auto 22px;display:grid;place-items:center;
+    background:linear-gradient(135deg,rgba(247,225,160,.18),rgba(205,154,53,.12));
+    border:1px solid rgba(233,196,106,.4)}
+  .success .check svg{width:34px;height:34px;stroke:var(--gold-1)}
+  .success h2{font-size:25px;margin-bottom:10px}
+  .success p{color:var(--muted);font-size:15px;max-width:340px;margin:0 auto 22px}
+  .ghost{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:11px;cursor:pointer;
+    background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;transition:.2s}
+  .ghost:hover{border-color:var(--gold-2);color:var(--gold-1)}
+
+  /* ---------- Footer ---------- */
+  footer{padding:40px 0;text-align:center}
+  footer .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  footer .brand .word{font-size:18px}
+  footer p{color:var(--muted-dim);font-size:13px}
+
+  ::selection{background:rgba(233,196,106,.3);color:#fff}
+</style>
+</head>
+<body>
+  <div class="scene"><img src="assets/bg-storm.png" alt="" /></div>
+  <div class="vignette"></div>
+  <div class="flash"></div>
+  <div class="flash b"></div>
+
+  <header id="hdr">
+    <div class="wrap nav">
+      <a class="brand" href="#top">
+        <img src="assets/logo-raiken.png" alt="RAIKEN" />
+        <span class="word">RAIKEN</span>
+      </a>
+      <a class="nav-cta" href="#demo">Agenda una demo</a>
+    </div>
+  </header>
+
+  <main id="top" class="wrap">
+    <section class="hero">
+      <div class="hero-copy" id="soluciones">
+        <h1>Automatización <span class="grad">inteligente</span> que conecta y escala tu empresa</h1>
+        <p class="lead">Diseñamos e implementamos sistemas de automatización inteligente que conectan los procesos de tu empresa —administrativos, operativos, comerciales y de atención al cliente— eliminando tareas manuales y repetitivas mediante flujos de trabajo personalizados.</p>
+        <p class="lead">Integramos <strong>inteligencia artificial conversacional</strong> en los canales donde opera tu negocio para atender clientes de forma autónoma las 24 horas, escalar a agentes humanos cuando es necesario y sincronizar toda la información en tiempo real.</p>
+        <div class="rule"></div>
+        <ul class="feat">
+          <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Panel de control propio y base de datos dedicada</li>
+          <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Agentes IA en WhatsApp, redes y canales digitales 24/7</li>
+          <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Flujos personalizados para cada área de tu negocio</li>
+          <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Soporte continuo y escalado a agentes humanos</li>
+        </ul>
+      </div>
+
+      <div class="card" id="demo">
+        <div id="form-root"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <a class="brand" href="#top">
+        <img src="assets/logo-raiken.png" alt="RAIKEN" />
+        <span class="word font-display">RAIKEN</span>
+      </a>
+      <p>© 2026 RAIKEN · Automatización inteligente con IA</p>
+    </div>
+  </footer>
+
+  <script>
+    /* ---- Navbar scroll state ---- */
+    const hdr = document.getElementById('hdr');
+    const onScroll = () => hdr.classList.toggle('scrolled', window.scrollY > 16);
+    window.addEventListener('scroll', onScroll);
+    onScroll();
+
+    /* ---- Demo form ---- */
+    (function () {
+      const TIPOS = [
+        'E-commerce / Retail',
+        'Servicios profesionales',
+        'Salud / Clínicas',
+        'Educación',
+        'Inmobiliaria',
+        'Finanzas / Seguros',
+        'Tecnología / SaaS',
+        'Otro'
+      ];
+
+      const root = document.getElementById('form-root');
+
+      const VALIDATORS = {
+        nombre:  v => v.trim() ? null : 'Ingresa tu nombre',
+        apellido: v => v.trim() ? null : 'Ingresa tu apellido',
+        email:   v => {
+          if (!v.trim()) return 'Ingresa tu correo';
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'Correo no válido';
+          return null;
+        },
+        phone:   v => {
+          if (!v.trim()) return 'Ingresa tu teléfono';
+          if (!/^[\d\s\-()+]{6,}$/.test(v)) return 'Número no válido';
+          return null;
+        },
+        cargo:   v => v.trim() ? null : 'Ingresa tu cargo',
+        empresa: v => v.trim() ? null : 'Ingresa la empresa',
+        tipo:    v => v ? null : 'Selecciona una opción'
+      };
+
+      function renderForm() {
+        const tipoOptions = TIPOS.map(t =>
+          `<option value="${t}">${t}</option>`
+        ).join('');
+
+        root.innerHTML = `
+          <form id="demo-form" novalidate>
+            <h2 class="font-display">Agenda una demo gratuita</h2>
+            <p class="sub">Cuéntanos sobre tu empresa y te contactamos.</p>
+
+            <div class="grid2">
+              <div class="field">
+                <label>Nombre<span class="req"> *</span></label>
+                <input class="inp" name="nombre" placeholder="María" autocomplete="given-name" />
+                <span class="err"></span>
+              </div>
+              <div class="field">
+                <label>Apellido<span class="req"> *</span></label>
+                <input class="inp" name="apellido" placeholder="González" autocomplete="family-name" />
+                <span class="err"></span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Correo electrónico corporativo<span class="req"> *</span></label>
+              <input class="inp" name="email" placeholder="nombre@empresa.com" inputmode="email" autocomplete="email" />
+              <span class="err"></span>
+            </div>
+
+            <div class="field">
+              <label>Número de teléfono<span class="req"> *</span></label>
+              <div class="phone-wrap">
+                <span class="cc">+57</span>
+                <input class="inp" name="phone" placeholder="300 123 4567" inputmode="tel" autocomplete="tel" />
+              </div>
+              <span class="err"></span>
+            </div>
+
+            <div class="field">
+              <label>Link de la página web</label>
+              <input class="inp" name="web" placeholder="https://" inputmode="url" autocomplete="url" />
+            </div>
+
+            <div class="grid2">
+              <div class="field">
+                <label>Cargo<span class="req"> *</span></label>
+                <input class="inp" name="cargo" placeholder="CEO / Gerente" autocomplete="organization-title" />
+                <span class="err"></span>
+              </div>
+              <div class="field">
+                <label>Nombre de la empresa<span class="req"> *</span></label>
+                <input class="inp" name="empresa" placeholder="Tu empresa" autocomplete="organization" />
+                <span class="err"></span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Tipo de cliente (Principal)<span class="req"> *</span></label>
+              <select class="inp" name="tipo">
+                <option value="">Selecciona una opción</option>
+                ${tipoOptions}
+              </select>
+              <span class="err"></span>
+            </div>
+
+            <button class="submit" type="submit">
+              Enviar solicitud
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1a1405" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            </button>
+          </form>
+        `;
+
+        const form = root.querySelector('#demo-form');
+
+        /* Clear field error on input */
+        form.addEventListener('input', e => {
+          const inp = e.target;
+          if (!inp.name) return;
+          inp.classList.remove('bad');
+          const errEl = inp.closest('.field').querySelector('.err');
+          if (errEl) { errEl.textContent = ''; errEl.classList.remove('show'); }
+        });
+
+        form.addEventListener('submit', e => {
+          e.preventDefault();
+          const values = {};
+          let hasErrors = false;
+
+          for (const [name, validate] of Object.entries(VALIDATORS)) {
+            const inp = form.querySelector(`[name="${name}"]`);
+            if (!inp) continue;
+            values[name] = inp.value;
+            const msg = validate(inp.value);
+            const errEl = inp.closest('.field').querySelector('.err');
+            if (msg) {
+              hasErrors = true;
+              inp.classList.add('bad');
+              if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
+            } else {
+              inp.classList.remove('bad');
+              if (errEl) { errEl.textContent = ''; errEl.classList.remove('show'); }
+            }
+          }
+
+          if (!hasErrors) renderSuccess(values.nombre, values.empresa);
+        });
+      }
+
+      function renderSuccess(nombre, empresa) {
+        root.innerHTML = `
+          <div class="success">
+            <div class="check">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+            </div>
+            <h2 class="font-display">Solicitud recibida</h2>
+            <p>Gracias, <strong style="color:#f3f5fb">${escHtml(nombre)}</strong>. Nuestro equipo revisará la información de <strong style="color:#f3f5fb">${escHtml(empresa)}</strong> y te contactaremos en menos de 24&nbsp;horas hábiles.</p>
+            <button class="ghost" id="reset-btn">Enviar otra solicitud</button>
+          </div>
+        `;
+        root.querySelector('#reset-btn').addEventListener('click', renderForm);
+      }
+
+      function escHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      renderForm();
+    })();
+  </script>
+</body>
+</html>
